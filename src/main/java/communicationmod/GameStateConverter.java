@@ -628,7 +628,7 @@ public class GameStateConverter {
      * @param card The card to convert
      * @return A card object
      */
-    private static HashMap<String, Object> convertCardToJson(AbstractCard card) {
+    public static HashMap<String, Object> convertCardToJson(AbstractCard card) {
         HashMap<String, Object> jsonCard = new HashMap<>();
         jsonCard.put("name", card.name);
         jsonCard.put("uuid", card.uuid.toString());
@@ -671,7 +671,7 @@ public class GameStateConverter {
      * @param monster The monster to convert
      * @return A monster object
      */
-    private static HashMap<String, Object> convertMonsterToJson(AbstractMonster monster) {
+    public static HashMap<String, Object> convertMonsterToJson(AbstractMonster monster) {
         HashMap<String, Object> jsonMonster = new HashMap<>();
         jsonMonster.put("id", monster.id);
         jsonMonster.put("name", monster.name);
