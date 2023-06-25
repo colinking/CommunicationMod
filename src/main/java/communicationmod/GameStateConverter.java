@@ -274,26 +274,30 @@ public class GameStateConverter {
         HashMap<String, Object> state = new HashMap<>();
         ArrayList<Object> rewards = new ArrayList<>();
         for(RewardItem reward : AbstractDungeon.combatRewardScreen.rewards) {
-            HashMap<String, Object> jsonReward = new HashMap<>();
-            jsonReward.put("reward_type", reward.type.name());
-            switch(reward.type) {
-                case GOLD:
-                case STOLEN_GOLD:
-                    jsonReward.put("gold", reward.goldAmt + reward.bonusGold);
-                    break;
-                case RELIC:
-                    jsonReward.put("relic", convertRelicToJson(reward.relic));
-                    break;
-                case POTION:
-                    jsonReward.put("potion", convertPotionToJson(reward.potion));
-                    break;
-                case SAPPHIRE_KEY:
-                    jsonReward.put("link", convertRelicToJson(reward.relicLink.relic));
-            }
-            rewards.add(jsonReward);
+            rewards.add(GameStateConverter.convertRewardToJson(reward));
         }
         state.put("rewards", rewards);
         return state;
+    }
+
+    public static HashMap<String, Object> convertRewardToJson(RewardItem reward) {
+        HashMap<String, Object> jsonReward = new HashMap<>();
+        jsonReward.put("reward_type", reward.type.name());
+        switch(reward.type) {
+            case GOLD:
+            case STOLEN_GOLD:
+                jsonReward.put("gold", reward.goldAmt + reward.bonusGold);
+                break;
+            case RELIC:
+                jsonReward.put("relic", convertRelicToJson(reward.relic));
+                break;
+            case POTION:
+                jsonReward.put("potion", convertPotionToJson(reward.potion));
+                break;
+            case SAPPHIRE_KEY:
+                jsonReward.put("link", convertRelicToJson(reward.relicLink.relic));
+        }
+        return jsonReward;
     }
 
     /**
