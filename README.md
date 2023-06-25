@@ -109,3 +109,7 @@ Communication Mod is probably not receiving a ready signal. Make sure your proce
 - Can I get some example code to help get started with the Communication Mod protocol?
 
 Try looking at [spirecomm](https://github.com/ForgottenArbiter/spirecomm), the Python package I wrote to interface with Communication Mod.
+
+- How do I run CommunicationMod from source?
+
+Run `mvn package` to build `target/CommunicationMod.jar`. This will automatically get copied into your Steam mods folder. Launch Slay the Spire with BaseMod and Communication Mod enabled.
