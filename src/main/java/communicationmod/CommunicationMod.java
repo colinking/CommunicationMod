@@ -356,6 +356,10 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         return false;
     }
 
+    public static void reportAction(String actionType) {
+        CommunicationMod.reportAction(actionType, new HashMap<>());
+    }
+
     public static void reportAction(String actionType, HashMap<String, Object> action) {
         HashMap<String, Object> response = new HashMap<>();
         response.put("action_type", actionType);
