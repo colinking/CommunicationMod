@@ -18,6 +18,7 @@ import com.megacrit.cardcrawl.orbs.AbstractOrb;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.powers.AbstractPower;
+import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.relics.RunicDome;
 import com.megacrit.cardcrawl.rewards.RewardItem;
@@ -31,6 +32,7 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import com.megacrit.cardcrawl.ui.buttons.LargeDialogOptionButton;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
+import com.megacrit.cardcrawl.unlock.UnlockTracker;
 import communicationmod.patches.UpdateBodyTextPatch;
 
 import java.lang.reflect.Field;
@@ -112,7 +114,10 @@ public class GameStateConverter {
         state.put("gold", AbstractDungeon.player.gold);
         state.put("seed", Settings.seed);
         state.put("class", AbstractDungeon.player.chosenClass.name());
+        state.put("class_unlocks", UnlockTracker.getUnlockLevel(AbstractDungeon.player.chosenClass));
         state.put("ascension_level", AbstractDungeon.ascensionLevel);
+
+        state.put("seeds", getSeedState());
 
         ArrayList<Object> relics = new ArrayList<>();
         for(AbstractRelic relic : AbstractDungeon.player.relics) {
@@ -150,6 +155,23 @@ public class GameStateConverter {
         keys.put("sapphire", Settings.hasSapphireKey);
         state.put("keys", keys);
 
+        return state;
+    }
+
+    private static HashMap<String, Object> getSeedState() {
+        HashMap<String, Object> state = new HashMap<>();
+        state.put("monster", AbstractDungeon.monsterRng.counter);
+        state.put("map", AbstractDungeon.mapRng.counter);
+        state.put("event", AbstractDungeon.eventRng.counter);
+        state.put("card", AbstractDungeon.cardRng.counter);
+        state.put("treasure", AbstractDungeon.treasureRng.counter);
+        state.put("relic", AbstractDungeon.relicRng.counter);
+        state.put("potion", AbstractDungeon.potionRng.counter);
+        state.put("monster_hp", AbstractDungeon.monsterHpRng.counter);
+        state.put("ai", AbstractDungeon.aiRng.counter);
+        state.put("shuffle", AbstractDungeon.shuffleRng.counter);
+        state.put("card_random", AbstractDungeon.cardRandomRng.counter);
+        state.put("misc", AbstractDungeon.miscRng.counter);
         return state;
     }
 
