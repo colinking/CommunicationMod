@@ -249,6 +249,8 @@ public class GameStateConverter {
         state.put("event_name", ReflectionHacks.getPrivateStatic(event.getClass(), "NAME"));
         if (event instanceof NeowEvent) {
             state.put("event_id", "Neow Event");
+            int bossCount = ReflectionHacks.getPrivate(event, event.getClass(), "bossCount");
+            state.put("is_mini_blessing", bossCount == 0);
         } else {
             try {
                 // AbstractEvent does not have a static "ID" field, but all of the events in the base game do.
@@ -884,6 +886,7 @@ public class GameStateConverter {
         HashMap<String, Object> jsonPotion = new HashMap<>();
         jsonPotion.put("id", potion.ID);
         jsonPotion.put("name", potion.name);
+        jsonPotion.put("rarity", potion.rarity.name());
         boolean canUse = potion.canUse();
         boolean canDiscard = potion.canDiscard();
         if (potion instanceof PotionSlot) {

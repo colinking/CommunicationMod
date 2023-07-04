@@ -110,6 +110,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     }
 
     public static void publishOnGameStateChange() {
+        logger.info("publishOnGameStateChange");
         for (OnStateChangeSubscriber sub : onStateChangeSubscribers) {
             sub.receiveOnStateChange();
         }
@@ -140,6 +141,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
 
     public void receivePostDungeonUpdate() {
         if (GameStateListener.checkForDungeonStateChange()) {
+            logger.info("checkForDungeonStateChange -> true");
             mustSendGameState = true;
         }
         if (AbstractDungeon.getCurrRoom().isBattleOver) {

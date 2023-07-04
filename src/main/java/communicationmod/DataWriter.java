@@ -26,7 +26,7 @@ public class DataWriter implements Runnable {
             try {
                 message = this.queue.take();
                 if (verbose) {
-                    logger.info("Sending message (hello world!): " + message);
+                    logger.info("Sending message: " + message);
                 }
                 stream.write(message.getBytes());
                 stream.write('\n');
