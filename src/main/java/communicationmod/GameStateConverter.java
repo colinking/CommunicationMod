@@ -882,7 +882,7 @@ public class GameStateConverter {
      * @param potion The potion to convert
      * @return A potion object
      */
-    private static HashMap<String, Object> convertPotionToJson(AbstractPotion potion) {
+    public static HashMap<String, Object> convertPotionToJson(AbstractPotion potion) {
         HashMap<String, Object> jsonPotion = new HashMap<>();
         jsonPotion.put("id", potion.ID);
         jsonPotion.put("name", potion.name);
