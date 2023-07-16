@@ -238,6 +238,19 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         sendMessage(state);
     }
 
+    public static void reportAction(String actionType) {
+        CommunicationMod.reportAction(actionType, new HashMap<>());
+    }
+
+    public static void reportAction(String actionType, HashMap<String, Object> action) {
+        HashMap<String, Object> response = new HashMap<>();
+        response.put("action_type", actionType);
+        response.put("action_state", action);
+
+        Gson gson = new Gson();
+        sendMessage(gson.toJson(response));
+    }
+
     public static void dispose() {
         logger.info("Shutting down child process...");
         if (listener != null) {
@@ -356,18 +369,5 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
             }
         }
         return false;
-    }
-
-    public static void reportAction(String actionType) {
-        CommunicationMod.reportAction(actionType, new HashMap<>());
-    }
-
-    public static void reportAction(String actionType, HashMap<String, Object> action) {
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("action_type", actionType);
-        response.put("action_state", action);
-
-        Gson gson = new Gson();
-        sendMessage(gson.toJson(response));
     }
 }
