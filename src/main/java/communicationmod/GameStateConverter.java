@@ -632,7 +632,7 @@ public class GameStateConverter {
      * @param node The node to convert
      * @return A node object
      */
-    private static HashMap<String, Object> convertMapRoomNodeToJson(MapRoomNode node) {
+    public static HashMap<String, Object> convertMapRoomNodeToJson(MapRoomNode node) {
         HashMap<String, Object> jsonNode = convertCoordinatesToJson(node.x, node.y);
         jsonNode.put("symbol", node.getRoomSymbol(true));
         return jsonNode;
