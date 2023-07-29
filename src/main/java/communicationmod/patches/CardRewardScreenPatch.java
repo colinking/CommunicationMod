@@ -63,6 +63,14 @@ public class CardRewardScreenPatch {
 
             HashMap<String, Object> action = new HashMap<>();
             action.put("card", GameStateConverter.convertCardToJson(hoveredCard));
+            int cardIndex = -1;
+            for (int i = 0; i < _instance.rewardGroup.size(); i++) {
+                if (_instance.rewardGroup.get(i).uuid.equals(hoveredCard.uuid)) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+            action.put("card_index", cardIndex);
             CommunicationMod.reportAction("SelectCard", action);
         }
 
