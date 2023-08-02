@@ -114,7 +114,11 @@ public class GameStateConverter {
         state.put("gold", AbstractDungeon.player.gold);
         state.put("seed", Settings.seed);
         state.put("class", AbstractDungeon.player.chosenClass.name());
-        state.put("class_unlocks", UnlockTracker.getUnlockLevel(AbstractDungeon.player.chosenClass));
+        HashMap<String, Integer> unlocks = new HashMap<>();
+        for (AbstractPlayer.PlayerClass cls : AbstractPlayer.PlayerClass.values()) {
+            unlocks.put(cls.name(), UnlockTracker.getUnlockLevel(cls));
+        }
+        state.put("unlocks", unlocks);
         state.put("ascension_level", AbstractDungeon.ascensionLevel);
 
         state.put("seeds", getSeedState());
