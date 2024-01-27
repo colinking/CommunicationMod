@@ -25,7 +25,6 @@ import java.util.HashMap;
         }
 )
 public class NeowEventConstructorPatch {
-        @SpirePostfixPatch()
         public static void Postfix(NeowEvent __instance, boolean isDone) {
                 if (CommandExecutor.isMiniBlessing != null) {
                         int bossCount = CommandExecutor.isMiniBlessing ? 0 : 1;
