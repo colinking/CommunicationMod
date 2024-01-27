@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 
 public class CommandExecutor {
+    public static Boolean isMiniBlessing = null;
 
     private static final Logger logger = LogManager.getLogger(CommandExecutor.class.getName());
 
@@ -352,16 +353,29 @@ public class CommandExecutor {
         }
         if(tokens.length >= 4) {
             String seedString = tokens[3].toUpperCase();
-            if(!seedString.matches("^[A-Z0-9]+$")) {
-                throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.INVALID_ARGUMENT, seedString);
+            if (!seedString.equals("-")) {
+                if(!seedString.matches("^[A-Z0-9]+$")) {
+                    throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.INVALID_ARGUMENT, seedString);
+                }
+                seedSet = true;
+                seed = SeedHelper.getLong(seedString);
+                boolean isTrialSeed = TrialHelper.isTrialSeed(seedString);
+                if (isTrialSeed) {
+                    Settings.specialSeed = seed;
+                    Settings.isTrial = true;
+                    seedSet = false;
+                }
             }
-            seedSet = true;
-            seed = SeedHelper.getLong(seedString);
-            boolean isTrialSeed = TrialHelper.isTrialSeed(seedString);
-            if (isTrialSeed) {
-                Settings.specialSeed = seed;
-                Settings.isTrial = true;
-                seedSet = false;
+        }
+        CommandExecutor.isMiniBlessing = null;
+        if (tokens.length >= 5) {
+            String blessingString = tokens[4].toUpperCase();
+            if (blessingString.equals("TRUE")) {
+                CommandExecutor.isMiniBlessing = true;
+            } else if (blessingString.equals("FALSE")) {
+                CommandExecutor.isMiniBlessing = false;
+            } else if(!blessingString.equals("-")) {
+                throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.INVALID_ARGUMENT, blessingString);
             }
         }
         if(!seedSet) {

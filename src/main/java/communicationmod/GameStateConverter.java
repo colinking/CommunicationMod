@@ -18,6 +18,7 @@ import com.megacrit.cardcrawl.orbs.AbstractOrb;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.powers.AbstractPower;
+import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.relics.RunicDome;
 import com.megacrit.cardcrawl.rewards.RewardItem;
@@ -31,6 +32,7 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import com.megacrit.cardcrawl.ui.buttons.LargeDialogOptionButton;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
+import com.megacrit.cardcrawl.unlock.UnlockTracker;
 import communicationmod.patches.UpdateBodyTextPatch;
 
 import java.lang.reflect.Field;
@@ -112,7 +114,14 @@ public class GameStateConverter {
         state.put("gold", AbstractDungeon.player.gold);
         state.put("seed", Settings.seed);
         state.put("class", AbstractDungeon.player.chosenClass.name());
+        HashMap<String, Integer> unlocks = new HashMap<>();
+        for (AbstractPlayer.PlayerClass cls : AbstractPlayer.PlayerClass.values()) {
+            unlocks.put(cls.name(), UnlockTracker.getUnlockLevel(cls));
+        }
+        state.put("unlocks", unlocks);
         state.put("ascension_level", AbstractDungeon.ascensionLevel);
+
+        state.put("seeds", getSeedState());
 
         ArrayList<Object> relics = new ArrayList<>();
         for(AbstractRelic relic : AbstractDungeon.player.relics) {
@@ -150,6 +159,23 @@ public class GameStateConverter {
         keys.put("sapphire", Settings.hasSapphireKey);
         state.put("keys", keys);
 
+        return state;
+    }
+
+    private static HashMap<String, Object> getSeedState() {
+        HashMap<String, Object> state = new HashMap<>();
+        state.put("monster", AbstractDungeon.monsterRng.counter);
+        state.put("map", AbstractDungeon.mapRng.counter);
+        state.put("event", AbstractDungeon.eventRng.counter);
+        state.put("card", AbstractDungeon.cardRng.counter);
+        state.put("treasure", AbstractDungeon.treasureRng.counter);
+        state.put("relic", AbstractDungeon.relicRng.counter);
+        state.put("potion", AbstractDungeon.potionRng.counter);
+        state.put("monster_hp", AbstractDungeon.monsterHpRng.counter);
+        state.put("ai", AbstractDungeon.aiRng.counter);
+        state.put("shuffle", AbstractDungeon.shuffleRng.counter);
+        state.put("card_random", AbstractDungeon.cardRandomRng.counter);
+        state.put("misc", AbstractDungeon.miscRng.counter);
         return state;
     }
 
@@ -227,6 +253,8 @@ public class GameStateConverter {
         state.put("event_name", ReflectionHacks.getPrivateStatic(event.getClass(), "NAME"));
         if (event instanceof NeowEvent) {
             state.put("event_id", "Neow Event");
+            int bossCount = ReflectionHacks.getPrivate(event, event.getClass(), "bossCount");
+            state.put("is_mini_blessing", bossCount == 0);
         } else {
             try {
                 // AbstractEvent does not have a static "ID" field, but all of the events in the base game do.
@@ -274,26 +302,30 @@ public class GameStateConverter {
         HashMap<String, Object> state = new HashMap<>();
         ArrayList<Object> rewards = new ArrayList<>();
         for(RewardItem reward : AbstractDungeon.combatRewardScreen.rewards) {
-            HashMap<String, Object> jsonReward = new HashMap<>();
-            jsonReward.put("reward_type", reward.type.name());
-            switch(reward.type) {
-                case GOLD:
-                case STOLEN_GOLD:
-                    jsonReward.put("gold", reward.goldAmt + reward.bonusGold);
-                    break;
-                case RELIC:
-                    jsonReward.put("relic", convertRelicToJson(reward.relic));
-                    break;
-                case POTION:
-                    jsonReward.put("potion", convertPotionToJson(reward.potion));
-                    break;
-                case SAPPHIRE_KEY:
-                    jsonReward.put("link", convertRelicToJson(reward.relicLink.relic));
-            }
-            rewards.add(jsonReward);
+            rewards.add(GameStateConverter.convertRewardToJson(reward));
         }
         state.put("rewards", rewards);
         return state;
+    }
+
+    public static HashMap<String, Object> convertRewardToJson(RewardItem reward) {
+        HashMap<String, Object> jsonReward = new HashMap<>();
+        jsonReward.put("reward_type", reward.type.name());
+        switch(reward.type) {
+            case GOLD:
+            case STOLEN_GOLD:
+                jsonReward.put("gold", reward.goldAmt + reward.bonusGold);
+                break;
+            case RELIC:
+                jsonReward.put("relic", convertRelicToJson(reward.relic));
+                break;
+            case POTION:
+                jsonReward.put("potion", convertPotionToJson(reward.potion));
+                break;
+            case SAPPHIRE_KEY:
+                jsonReward.put("link", convertRelicToJson(reward.relicLink.relic));
+        }
+        return jsonReward;
     }
 
     /**
@@ -604,7 +636,7 @@ public class GameStateConverter {
      * @param node The node to convert
      * @return A node object
      */
-    private static HashMap<String, Object> convertMapRoomNodeToJson(MapRoomNode node) {
+    public static HashMap<String, Object> convertMapRoomNodeToJson(MapRoomNode node) {
         HashMap<String, Object> jsonNode = convertCoordinatesToJson(node.x, node.y);
         jsonNode.put("symbol", node.getRoomSymbol(true));
         return jsonNode;
@@ -628,7 +660,7 @@ public class GameStateConverter {
      * @param card The card to convert
      * @return A card object
      */
-    private static HashMap<String, Object> convertCardToJson(AbstractCard card) {
+    public static HashMap<String, Object> convertCardToJson(AbstractCard card) {
         HashMap<String, Object> jsonCard = new HashMap<>();
         jsonCard.put("name", card.name);
         jsonCard.put("uuid", card.uuid.toString());
@@ -671,7 +703,7 @@ public class GameStateConverter {
      * @param monster The monster to convert
      * @return A monster object
      */
-    private static HashMap<String, Object> convertMonsterToJson(AbstractMonster monster) {
+    public static HashMap<String, Object> convertMonsterToJson(AbstractMonster monster) {
         HashMap<String, Object> jsonMonster = new HashMap<>();
         jsonMonster.put("id", monster.id);
         jsonMonster.put("name", monster.name);
@@ -854,10 +886,11 @@ public class GameStateConverter {
      * @param potion The potion to convert
      * @return A potion object
      */
-    private static HashMap<String, Object> convertPotionToJson(AbstractPotion potion) {
+    public static HashMap<String, Object> convertPotionToJson(AbstractPotion potion) {
         HashMap<String, Object> jsonPotion = new HashMap<>();
         jsonPotion.put("id", potion.ID);
         jsonPotion.put("name", potion.name);
+        jsonPotion.put("rarity", potion.rarity.name());
         boolean canUse = potion.canUse();
         boolean canDiscard = potion.canDiscard();
         if (potion instanceof PotionSlot) {

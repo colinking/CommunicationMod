@@ -52,7 +52,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     private static final long DEFAULT_TIMEOUT = 10L;
     private static final boolean DEFAULT_VERBOSITY = true;
 
-    public CommunicationMod(){
+    public CommunicationMod() {
         BaseMod.subscribe(this);
         onStateChangeSubscribers = new ArrayList<>();
         CommunicationMod.subscribe(this);
@@ -74,7 +74,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
             e.printStackTrace();
         }
 
-        if(getRunOnGameStartOption()) {
+        if (getRunOnGameStartOption()) {
             boolean success = startExternalProcess();
         }
     }
@@ -84,15 +84,15 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     }
 
     public void receivePreUpdate() {
-        if(listener != null && !listener.isAlive() && writeThread != null && writeThread.isAlive()) {
+        if (listener != null && !listener.isAlive() && writeThread != null && writeThread.isAlive()) {
             logger.info("Child process has died...");
             writeThread.interrupt();
             readThread.interrupt();
         }
-        if(messageAvailable()) {
+        if (messageAvailable()) {
             try {
                 boolean stateChanged = CommandExecutor.executeCommand(readMessage());
-                if(stateChanged) {
+                if (stateChanged) {
                     GameStateListener.registerCommandExecution();
                 }
             } catch (InvalidCommandException e) {
@@ -110,7 +110,8 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     }
 
     public static void publishOnGameStateChange() {
-        for(OnStateChangeSubscriber sub : onStateChangeSubscribers) {
+        logger.info("publishOnGameStateChange");
+        for (OnStateChangeSubscriber sub : onStateChangeSubscribers) {
             sub.receiveOnStateChange();
         }
     }
@@ -128,10 +129,10 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     }
 
     public void receivePostUpdate() {
-        if(!mustSendGameState && GameStateListener.checkForMenuStateChange()) {
+        if (!mustSendGameState && GameStateListener.checkForMenuStateChange()) {
             mustSendGameState = true;
         }
-        if(mustSendGameState) {
+        if (mustSendGameState) {
             publishOnGameStateChange();
             mustSendGameState = false;
         }
@@ -140,9 +141,10 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
 
     public void receivePostDungeonUpdate() {
         if (GameStateListener.checkForDungeonStateChange()) {
+            logger.info("checkForDungeonStateChange -> true");
             mustSendGameState = true;
         }
-        if(AbstractDungeon.getCurrRoom().isBattleOver) {
+        if (AbstractDungeon.getCurrRoom().isBattleOver) {
             GameStateListener.signalTurnEnd();
         }
     }
@@ -152,7 +154,8 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         ModLabeledToggleButton gameStartOptionButton = new ModLabeledToggleButton(
                 "Start external process at game launch",
                 350, 550, Settings.CREAM_COLOR, FontHelper.charDescFont,
-                getRunOnGameStartOption(), settingsPanel, modLabel -> {},
+                getRunOnGameStartOption(), settingsPanel, modLabel -> {
+        },
                 modToggleButton -> {
                     if (communicationConfig != null) {
                         communicationConfig.setBool(GAME_START_OPTION, modToggleButton.enabled);
@@ -168,43 +171,46 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         ModLabel externalCommandLabel = new ModLabel(
                 "", 350, 600, Settings.CREAM_COLOR, FontHelper.charDescFont,
                 settingsPanel, modLabel -> {
-                    modLabel.text = String.format("External Process Command: %s", getSubprocessCommandString());
-                });
+            modLabel.text = String.format("External Process Command: %s", getSubprocessCommandString());
+        });
         settingsPanel.addUIElement(externalCommandLabel);
 
         ModButton startProcessButton = new ModButton(
                 350, 650, settingsPanel, modButton -> {
-                    BaseMod.modSettingsUp = false;
-                    startExternalProcess();
-                });
+            BaseMod.modSettingsUp = false;
+            startExternalProcess();
+        });
         settingsPanel.addUIElement(startProcessButton);
 
         ModLabel startProcessLabel = new ModLabel(
                 "(Re)start external process",
                 475, 700, Settings.CREAM_COLOR, FontHelper.charDescFont,
                 settingsPanel, modLabel -> {
-                    if(listener != null && listener.isAlive()) {
-                        modLabel.text = "Restart external process";
-                    } else {
-                        modLabel.text = "Start external process";
-                    }
-                });
+            if (listener != null && listener.isAlive()) {
+                modLabel.text = "Restart external process";
+            } else {
+                modLabel.text = "Start external process";
+            }
+        });
         settingsPanel.addUIElement(startProcessLabel);
 
         ModButton editProcessButton = new ModButton(
-                850, 650, settingsPanel, modButton -> {});
+                850, 650, settingsPanel, modButton -> {
+        });
         settingsPanel.addUIElement(editProcessButton);
 
         ModLabel editProcessLabel = new ModLabel(
                 "Set command (not implemented)",
                 975, 700, Settings.CREAM_COLOR, FontHelper.charDescFont,
-                settingsPanel, modLabel -> {});
+                settingsPanel, modLabel -> {
+        });
         settingsPanel.addUIElement(editProcessLabel);
 
         ModLabeledToggleButton verbosityOption = new ModLabeledToggleButton(
                 "Suppress verbose log output",
                 350, 500, Settings.CREAM_COLOR, FontHelper.charDescFont,
-                getVerbosityOption(), settingsPanel, modLabel -> {},
+                getVerbosityOption(), settingsPanel, modLabel -> {
+        },
                 modToggleButton -> {
                     if (communicationConfig != null) {
                         communicationConfig.setBool(VERBOSE_OPTION, modToggleButton.enabled);
@@ -216,7 +222,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
                     }
                 });
         settingsPanel.addUIElement(verbosityOption);
-        BaseMod.registerModBadge(ImageMaster.loadImage("Icon.png"),"Communication Mod", "Forgotten Arbiter", null, settingsPanel);
+        BaseMod.registerModBadge(ImageMaster.loadImage("Icon.png"), "Communication Mod", "Forgotten Arbiter", null, settingsPanel);
     }
 
     private void startCommunicationThreads() {
@@ -232,15 +238,28 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         sendMessage(state);
     }
 
+    public static void reportAction(String actionType) {
+        CommunicationMod.reportAction(actionType, new HashMap<>());
+    }
+
+    public static void reportAction(String actionType, HashMap<String, Object> action) {
+        HashMap<String, Object> response = new HashMap<>();
+        response.put("action_type", actionType);
+        response.put("action_state", action);
+
+        Gson gson = new Gson();
+        sendMessage(gson.toJson(response));
+    }
+
     public static void dispose() {
         logger.info("Shutting down child process...");
-        if(listener != null) {
+        if (listener != null) {
             listener.destroy();
         }
     }
 
     private static void sendMessage(String message) {
-        if(writeQueue != null && writeThread.isAlive()) {
+        if (writeQueue != null && writeThread.isAlive()) {
             writeQueue.add(message);
         }
     }
@@ -250,7 +269,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     }
 
     private static String readMessage() {
-        if(messageAvailable()) {
+        if (messageAvailable()) {
             return readQueue.remove();
         } else {
             return null;
@@ -290,7 +309,7 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         if (communicationConfig == null) {
             return DEFAULT_TIMEOUT;
         }
-        return (long)communicationConfig.getInt(INITIALIZATION_TIMEOUT_OPTION);
+        return (long) communicationConfig.getInt(INITIALIZATION_TIMEOUT_OPTION);
     }
 
     private static boolean getVerbosityOption() {
@@ -301,13 +320,13 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
     }
 
     private boolean startExternalProcess() {
-        if(readThread != null) {
+        if (readThread != null) {
             readThread.interrupt();
         }
-        if(writeThread != null) {
+        if (writeThread != null) {
             writeThread.interrupt();
         }
-        if(listener != null) {
+        if (listener != null) {
             listener.destroy();
             try {
                 boolean success = listener.waitFor(2, TimeUnit.SECONDS);
@@ -328,12 +347,12 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
             logger.error("Could not start external process.");
             e.printStackTrace();
         }
-        if(listener != null) {
+        if (listener != null) {
             startCommunicationThreads();
             // We wait for the child process to signal it is ready before we proceed. Note that the game
             // will hang while this is occurring, and it will time out after a specified waiting time.
             String message = readMessageBlocking();
-            if(message == null) {
+            if (message == null) {
                 // The child process waited too long to respond, so we kill it.
                 readThread.interrupt();
                 writeThread.interrupt();
@@ -351,5 +370,4 @@ public class CommunicationMod implements PostInitializeSubscriber, PostUpdateSub
         }
         return false;
     }
-
 }

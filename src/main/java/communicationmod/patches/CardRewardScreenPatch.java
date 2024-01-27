@@ -4,10 +4,13 @@ import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
+import communicationmod.CommunicationMod;
+import communicationmod.GameStateConverter;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class CardRewardScreenPatch {
 
@@ -52,10 +55,23 @@ public class CardRewardScreenPatch {
     public static class AcquireCardPatch {
 
         @SpireInsertPatch(
-                locator=Locator.class
+                locator=Locator.class,
+                localvars = {"hoveredCard"}
         )
-        public static void Insert(CardRewardScreen _instance) {
+        public static void Insert(CardRewardScreen _instance, AbstractCard hoveredCard) {
             doHover = false;
+
+            HashMap<String, Object> action = new HashMap<>();
+            action.put("card", GameStateConverter.convertCardToJson(hoveredCard));
+            int cardIndex = -1;
+            for (int i = 0; i < _instance.rewardGroup.size(); i++) {
+                if (_instance.rewardGroup.get(i).uuid.equals(hoveredCard.uuid)) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+            action.put("card_index", cardIndex);
+            CommunicationMod.reportAction("SelectCard", action);
         }
 
         private static class Locator extends SpireInsertLocator {

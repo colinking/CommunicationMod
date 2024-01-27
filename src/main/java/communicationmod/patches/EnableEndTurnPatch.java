@@ -2,6 +2,7 @@ package communicationmod.patches;
 
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.megacrit.cardcrawl.actions.common.EnableEndTurnButtonAction;
+import communicationmod.CommunicationMod;
 import communicationmod.GameStateListener;
 
 @SpirePatch(
@@ -11,5 +12,6 @@ import communicationmod.GameStateListener;
 public class EnableEndTurnPatch {
     public static void Postfix(EnableEndTurnButtonAction _instance) {
         GameStateListener.signalTurnStart();
+        CommunicationMod.publishOnGameStateChange();
     }
 }
