@@ -521,6 +521,7 @@ public class GameStateConverter {
             case HAND_SELECT:
                 return getHandSelectState();
             case GAME_OVER:
+            case UNLOCKS:
                 return getGameOverState();
         }
         return new HashMap<>();

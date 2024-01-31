@@ -20,6 +20,7 @@ import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.*;
+import com.megacrit.cardcrawl.screens.mainMenu.MenuButton;
 import communicationmod.patches.InputActionPatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,6 +68,9 @@ public class CommandExecutor {
             case "start":
                 executeStartCommand(tokens);
                 return true;
+            case "continue":
+                executeContinueCommand();
+                return true;
             case "state":
                 executeStateCommand();
                 return false;
@@ -108,6 +112,9 @@ public class CommandExecutor {
         }
         if (isStartCommandAvailable()) {
             availableCommands.add("start");
+        }
+        if (isContinueCommandAvailable()) {
+            availableCommands.add("continue");
         }
         if (isInDungeon()) {
             availableCommands.add("key");
@@ -190,6 +197,10 @@ public class CommandExecutor {
         return !isInDungeon() && CardCrawlGame.mainMenuScreen != null;
     }
 
+    public static boolean isContinueCommandAvailable() {
+        return !isInDungeon() && CardCrawlGame.mainMenuScreen != null && CardCrawlGame.characterManager.anySaveFileExists();
+    }
+
     private static void executeStateCommand() {
         CommunicationMod.mustSendGameState = true;
     }
@@ -234,7 +245,13 @@ public class CommandExecutor {
             if(target_monster == null) {
                 throw new InvalidCommandException("Selected card requires an enemy target.");
             }
+            if (AbstractDungeon.player.hasPower("Surrounded")) {
+                AbstractDungeon.player.flipHorizontal = target_monster.drawX < AbstractDungeon.player.drawX;
+            }
             AbstractDungeon.actionManager.cardQueue.add(new CardQueueItem(card, target_monster));
+            // The Surrounded/BackAttack powers are implemented within refreshHandLayout which is not called
+            // when interacting with STS programmatically. We need to call it manually after using a targeted card.
+            // AbstractDungeon.actionManager.(new RefreshHandAction());
         } else {
             AbstractDungeon.actionManager.cardQueue.add(new CardQueueItem(card, null));
         }
@@ -319,6 +336,15 @@ public class CommandExecutor {
 
     private static void executeCancelCommand() {
         ChoiceScreenUtils.pressCancelButton();
+    }
+
+    private static void executeContinueCommand() throws InvalidCommandException {
+        for (MenuButton button : CardCrawlGame.mainMenuScreen.buttons) {
+            if (button.result == MenuButton.ClickResult.RESUME_GAME) {
+                button.hb.clicked = true;
+                GameStateListener.resetStateVariables();
+           }
+        }
     }
 
     private static void executeStartCommand(String[] tokens) throws InvalidCommandException {
