@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 
 public class CommandExecutor {
+    // TODO: this might be broken across multiple runs in the same session?
     public static Boolean isMiniBlessing = null;
 
     private static final Logger logger = LogManager.getLogger(CommandExecutor.class.getName());
