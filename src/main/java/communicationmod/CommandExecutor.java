@@ -250,9 +250,6 @@ public class CommandExecutor {
                 AbstractDungeon.player.flipHorizontal = target_monster.drawX < AbstractDungeon.player.drawX;
             }
             AbstractDungeon.actionManager.cardQueue.add(new CardQueueItem(card, target_monster));
-            // The Surrounded/BackAttack powers are implemented within refreshHandLayout which is not called
-            // when interacting with STS programmatically. We need to call it manually after using a targeted card.
-            // AbstractDungeon.actionManager.(new RefreshHandAction());
         } else {
             AbstractDungeon.actionManager.cardQueue.add(new CardQueueItem(card, null));
         }
