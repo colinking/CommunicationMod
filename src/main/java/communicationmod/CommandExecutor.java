@@ -20,6 +20,7 @@ import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.*;
+import com.megacrit.cardcrawl.screens.mainMenu.MenuButton;
 import communicationmod.patches.InputActionPatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +28,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 
 public class CommandExecutor {
+    // TODO: this might be broken across multiple runs in the same session?
+    public static Boolean isMiniBlessing = null;
 
     private static final Logger logger = LogManager.getLogger(CommandExecutor.class.getName());
 
@@ -65,6 +68,9 @@ public class CommandExecutor {
                 return true;
             case "start":
                 executeStartCommand(tokens);
+                return true;
+            case "continue":
+                executeContinueCommand();
                 return true;
             case "state":
                 executeStateCommand();
@@ -107,6 +113,9 @@ public class CommandExecutor {
         }
         if (isStartCommandAvailable()) {
             availableCommands.add("start");
+        }
+        if (isContinueCommandAvailable()) {
+            availableCommands.add("continue");
         }
         if (isInDungeon()) {
             availableCommands.add("key");
@@ -189,6 +198,10 @@ public class CommandExecutor {
         return !isInDungeon() && CardCrawlGame.mainMenuScreen != null;
     }
 
+    public static boolean isContinueCommandAvailable() {
+        return !isInDungeon() && CardCrawlGame.mainMenuScreen != null && CardCrawlGame.characterManager.anySaveFileExists();
+    }
+
     private static void executeStateCommand() {
         CommunicationMod.mustSendGameState = true;
     }
@@ -232,6 +245,9 @@ public class CommandExecutor {
         if(card.target == AbstractCard.CardTarget.ENEMY || card.target == AbstractCard.CardTarget.SELF_AND_ENEMY) {
             if(target_monster == null) {
                 throw new InvalidCommandException("Selected card requires an enemy target.");
+            }
+            if (AbstractDungeon.player.hasPower("Surrounded")) {
+                AbstractDungeon.player.flipHorizontal = target_monster.drawX < AbstractDungeon.player.drawX;
             }
             AbstractDungeon.actionManager.cardQueue.add(new CardQueueItem(card, target_monster));
         } else {
@@ -320,6 +336,15 @@ public class CommandExecutor {
         ChoiceScreenUtils.pressCancelButton();
     }
 
+    private static void executeContinueCommand() throws InvalidCommandException {
+        for (MenuButton button : CardCrawlGame.mainMenuScreen.buttons) {
+            if (button.result == MenuButton.ClickResult.RESUME_GAME) {
+                button.hb.clicked = true;
+                GameStateListener.resetStateVariables();
+           }
+        }
+    }
+
     private static void executeStartCommand(String[] tokens) throws InvalidCommandException {
         if (tokens.length < 2) {
             throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.MISSING_ARGUMENT);
@@ -352,16 +377,29 @@ public class CommandExecutor {
         }
         if(tokens.length >= 4) {
             String seedString = tokens[3].toUpperCase();
-            if(!seedString.matches("^[A-Z0-9]+$")) {
-                throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.INVALID_ARGUMENT, seedString);
+            if (!seedString.equals("-")) {
+                if(!seedString.matches("^[A-Z0-9]+$")) {
+                    throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.INVALID_ARGUMENT, seedString);
+                }
+                seedSet = true;
+                seed = SeedHelper.getLong(seedString);
+                boolean isTrialSeed = TrialHelper.isTrialSeed(seedString);
+                if (isTrialSeed) {
+                    Settings.specialSeed = seed;
+                    Settings.isTrial = true;
+                    seedSet = false;
+                }
             }
-            seedSet = true;
-            seed = SeedHelper.getLong(seedString);
-            boolean isTrialSeed = TrialHelper.isTrialSeed(seedString);
-            if (isTrialSeed) {
-                Settings.specialSeed = seed;
-                Settings.isTrial = true;
-                seedSet = false;
+        }
+        CommandExecutor.isMiniBlessing = null;
+        if (tokens.length >= 5) {
+            String blessingString = tokens[4].toUpperCase();
+            if (blessingString.equals("TRUE")) {
+                CommandExecutor.isMiniBlessing = true;
+            } else if (blessingString.equals("FALSE")) {
+                CommandExecutor.isMiniBlessing = false;
+            } else if(!blessingString.equals("-")) {
+                throw new InvalidCommandException(tokens, InvalidCommandException.InvalidCommandFormat.INVALID_ARGUMENT, blessingString);
             }
         }
         if(!seedSet) {

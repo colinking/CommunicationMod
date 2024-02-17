@@ -22,6 +22,8 @@ import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rewards.chests.AbstractChest;
 import com.megacrit.cardcrawl.rooms.*;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
+import com.megacrit.cardcrawl.screens.GameOverScreen;
+import com.megacrit.cardcrawl.screens.VictoryScreen;
 import com.megacrit.cardcrawl.screens.mainMenu.MenuCancelButton;
 import com.megacrit.cardcrawl.screens.select.BossRelicSelectScreen;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
@@ -59,6 +61,7 @@ public class ChoiceScreenUtils {
         GRID,
         HAND_SELECT,
         GAME_OVER,
+        UNLOCKS,
         COMPLETE,
         NONE
     }
@@ -103,9 +106,10 @@ public class ChoiceScreenUtils {
                 return ChoiceType.HAND_SELECT;
             case DEATH:
             case VICTORY:
+                return ChoiceType.GAME_OVER;
             case UNLOCK:
             case NEOW_UNLOCK:
-                return ChoiceType.GAME_OVER;
+                return ChoiceType.UNLOCKS;
             default:
                 return ChoiceType.NONE;
         }
@@ -225,6 +229,8 @@ public class ChoiceScreenUtils {
                 return false;
             case GAME_OVER:
                 return false;
+            case UNLOCKS:
+                return false;
             case COMPLETE:
                 return false;
             default:
@@ -310,6 +316,8 @@ public class ChoiceScreenUtils {
                 return isHandSelectConfirmButtonEnabled();
             case GAME_OVER:
                 return true;
+            case UNLOCKS:
+                return true;
             case COMPLETE:
                 return true;
             default:
@@ -336,6 +344,8 @@ public class ChoiceScreenUtils {
             case HAND_SELECT:
                 return "confirm";
             case GAME_OVER:
+                return "proceed";
+            case UNLOCKS:
                 return "proceed";
             case COMPLETE:
                 return "proceed";
@@ -369,6 +379,9 @@ public class ChoiceScreenUtils {
                 clickHandSelectScreenConfirmButton();
                 return;
             case GAME_OVER:
+                clickGameOverProceedButton();
+                return;
+            case UNLOCKS:
                 clickGameOverReturnButton();
                 return;
             case COMPLETE:
@@ -424,10 +437,10 @@ public class ChoiceScreenUtils {
     public static ArrayList<String> getHandSelectScreenChoices() {
         ArrayList<String> choices = new ArrayList<>();
         HandCardSelectScreen screen = AbstractDungeon.handCardSelectScreen;
-        if(screen.numCardsToSelect == screen.selectedCards.group.size()) {
-            return choices;
-        }
         for(AbstractCard card : AbstractDungeon.player.hand.group) {
+            choices.add(card.name.toLowerCase());
+        }
+        for (AbstractCard card : screen.selectedCards.group) {
             choices.add(card.name.toLowerCase());
         }
         return choices;
@@ -435,15 +448,46 @@ public class ChoiceScreenUtils {
 
     public static void makeHandSelectScreenChoice(int choice) {
         HandCardSelectScreen screen = AbstractDungeon.handCardSelectScreen;
-        screen.hoveredCard = AbstractDungeon.player.hand.group.get(choice);
-        screen.hoveredCard.setAngle(0.0f, false); // This might not be necessary
-        try {
-            Method hotkeyCheck = HandCardSelectScreen.class.getDeclaredMethod("selectHoveredCard");
-            hotkeyCheck.setAccessible(true);
-            hotkeyCheck.invoke(screen);
-        } catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-            throw new RuntimeException("selectHoveredCard method somehow can't be called.");
+        if (choice < AbstractDungeon.player.hand.group.size()) {
+            // Selecting a card from the hand...
+            screen.hoveredCard = AbstractDungeon.player.hand.group.get(choice);
+            screen.hoveredCard.setAngle(0.0f, false); // This might not be necessary
+            try {
+                Method selectHoveredCard = HandCardSelectScreen.class.getDeclaredMethod("selectHoveredCard");
+                selectHoveredCard.setAccessible(true);
+                selectHoveredCard.invoke(screen);
+            } catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                throw new RuntimeException("selectHoveredCard method somehow can't be called.");
+            }
+        } else {
+            // De-selecting a card...
+            int selectedCardsIndex = choice - AbstractDungeon.player.hand.group.size();
+            AbstractCard card = screen.selectedCards.group.get(selectedCardsIndex);
+
+            // The following logic is ported from HandCardSelectScreen.updateSelectedCards:
+            AbstractDungeon.player.hand.addToTop(card);
+            screen.selectedCards.group.remove(selectedCardsIndex);
+            try {
+                Method refreshSelectedCards = HandCardSelectScreen.class.getDeclaredMethod("refreshSelectedCards");
+                refreshSelectedCards.setAccessible(true);
+                refreshSelectedCards.invoke(screen);
+            } catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                throw new RuntimeException("refreshSelectedCards method somehow can't be called.");
+            }
+            try {
+                Method updateMessage = HandCardSelectScreen.class.getDeclaredMethod("updateMessage");
+                updateMessage.setAccessible(true);
+                updateMessage.invoke(screen);
+            } catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                throw new RuntimeException("updateMessage method somehow can't be called.");
+            }
+            if (Settings.isControllerMode) {
+                AbstractDungeon.player.hand.refreshHandLayout();
+            }
+            GameStateListener.registerStateChange();
         }
     }
 
@@ -865,6 +909,11 @@ public class ChoiceScreenUtils {
         String classname = option.getClass().getSimpleName();
         String nameWithoutOption = classname.substring(0, classname.length() - "Option".length());
         return nameWithoutOption.toLowerCase();
+    }
+
+    private static void clickGameOverProceedButton() {
+        ReturnToMenuButton returnButton = ReflectionHacks.getPrivateInherited(AbstractDungeon.victoryScreen, VictoryScreen.class, "returnButton");
+        returnButton.hb.clicked = true;
     }
 
     private static void clickGameOverReturnButton() {
